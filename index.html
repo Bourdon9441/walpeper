@@ -27,7 +27,7 @@ footer{border-top:1px solid #222;padding:25px 0 35px;color:#666;font-size:11px}.
 .authbox label{display:block;color:#aaa;font-size:11px;margin:13px 0 6px}.authbox input,.authbox select,.authbox textarea{width:100%;height:42px;border:1px solid #333;border-radius:8px;background:#111;color:#fff;padding:0 12px;outline:none;font:13px 'DM Sans',sans-serif}.authbox input:focus,.authbox textarea:focus{border-color:#888}
 .authrow{display:flex;gap:8px;margin-top:16px}.authrow>*{flex:1}.authstatus{font-size:11px;color:#aaa;min-height:18px;margin-top:12px}.authclose{float:right;border:1px solid #333;background:#111;color:#ddd;border-radius:7px;width:30px;height:30px}
 .memberline{display:flex;align-items:center;gap:9px;color:#aaa;font-size:11px}.memberline button{font-size:11px}
-.community{padding:0 0 85px}.community .grid{margin-top:18px}.community-image{height:250px;border-radius:7px;overflow:hidden;background:#111}.community-image img{width:100%;height:100%;object-fit:cover;display:block}
+.community{padding:0 0 85px}.community .grid{margin-top:18px}.community-image{width:100%;aspect-ratio:16/9;border-radius:7px;overflow:hidden;background:#111}.community-image.phone{aspect-ratio:9/16;max-height:520px}.community-image.pc{aspect-ratio:16/9}.community-image img{width:100%;height:100%;object-fit:contain;display:block}.devicefilters{display:flex;gap:7px;flex-wrap:wrap;margin:16px 0 4px}.devicefilter{border:1px solid #292929;border-radius:7px;padding:8px 12px;background:#090909;color:#888;font-size:11px}.devicefilter.active{background:#f5f5f5;color:#080808;border-color:#f5f5f5}
 .uploadarea{border:1px dashed #444;border-radius:10px;padding:15px;margin-top:12px}.uploadarea .btn{margin-top:12px}.adminhint{font-size:11px;color:#777;line-height:1.6;margin-top:10px}
 @media(max-width:540px){.authbox{padding:20px}.community-image{height:230px}}
 
@@ -42,7 +42,7 @@ footer{border-top:1px solid #222;padding:25px 0 35px;color:#666;font-size:11px}.
 
 <section class="section community" id="communityCollection">
 <div class="sectiontop"><div><div class="overline">03 — LA COMMUNAUTÉ</div><h2>Les créations publiées.</h2><p>Les fonds d’écran partagés par Wallpaper Studio.</p></div><div class="memberline" id="memberLine">Connexion non requise pour explorer.</div></div>
-<div class="grid" id="communityGallery"><div class="empty">Chargement de la collection…</div></div>
+<div class="devicefilters" id="deviceFilters"><button class="devicefilter active" data-device="all">Tous les fonds</button><button class="devicefilter" data-device="phone">Téléphone</button><button class="devicefilter" data-device="pc">PC</button></div><div class="grid" id="communityGallery"><div class="empty">Chargement de la collection…</div></div>
 </section>
 <section class="statement" id="studio"><div><div class="overline">02 — LE STUDIO</div><h2>Moins de bruit. Plus de personnalité.</h2></div><p>Wallpaper Studio est un espace dédié aux fonds d’écran et à la création visuelle. Une expérience simple, soignée et pensée pour vos appareils.</p></section>
 </main>
@@ -60,6 +60,7 @@ footer{border-top:1px solid #222;padding:25px 0 35px;color:#666;font-size:11px}.
 <button class="authclose" id="adminClose" aria-label="Fermer">×</button><div class="overline">ADMINISTRATION</div><h2>Publier un fond.</h2><p>Les publications sont visibles publiquement après leur envoi.</p>
 <form id="uploadForm"><label for="wallTitle">Titre</label><input id="wallTitle" required maxlength="80" placeholder="Ex. : Horizon calme">
 <label for="wallCategory">Catégorie</label><select id="wallCategory"><option>Abstrait</option><option>Nature</option><option>Minimaliste</option><option>Architecture</option><option>Dégradé</option></select>
+<label for="wallDevice">Appareil</label><select id="wallDevice"><option value="pc">PC — paysage (16:9 conseillé)</option><option value="phone">Téléphone — portrait (9:16 conseillé)</option></select>
 <label for="wallDescription">Description</label><textarea id="wallDescription" rows="2" style="height:70px;padding:10px" maxlength="300" placeholder="Quelques mots sur cette création"></textarea>
 <label for="wallFile">Image (JPG, PNG, WebP ou AVIF — 15 Mo maximum)</label><input id="wallFile" type="file" accept="image/jpeg,image/png,image/webp,image/avif" required>
 <button class="btn light" type="submit" style="width:100%;margin-top:16px">Publier la création</button></form>
@@ -272,12 +273,22 @@ document.getElementById("search").addEventListener("input",render);document.getE
     $("adminHint").textContent="Votre compte possède le rôle administrateur.";
   }
   function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+  let communityDeviceFilter = "all";
+  $("deviceFilters").addEventListener("click", e => {
+    const button = e.target.closest("[data-device]");
+    if (!button) return;
+    communityDeviceFilter = button.dataset.device;
+    document.querySelectorAll(".devicefilter").forEach(x => x.classList.toggle("active", x === button));
+    loadCommunity();
+  });
   async function loadCommunity() {
     const root=$("communityGallery");
-    const {data,error}=await client.from("wallpapers").select("id,title,description,category,image_url,created_at").eq("is_published",true).order("created_at",{ascending:false});
+    const {data,error}=await client.from("wallpapers").select("id,title,description,category,image_url,device_type,created_at").eq("is_published",true).order("created_at",{ascending:false});
     if(error){root.innerHTML='<div class="empty">La collection communautaire sera disponible dès que la base sera initialisée.</div>';return;}
     if(!data?.length){root.innerHTML='<div class="empty">Aucune publication pour le moment. Revenez bientôt.</div>';return;}
-    root.innerHTML=data.map(w=>'<article class="wallcard"><div class="community-image"><img loading="lazy" src="'+esc(w.image_url)+'" alt="'+esc(w.title)+'"></div><div class="wallmeta"><div><div class="walltitle">'+esc(w.title)+'</div><div class="wallsub">'+esc(w.category)+' · '+esc(w.description||"Wallpaper Studio")+'</div></div><div class="cardactions"><button class="iconbtn favbtn" data-id="'+esc(w.id)+'" title="Ajouter aux favoris" aria-label="Ajouter aux favoris">♡</button><a class="iconbtn" href="'+esc(w.image_url)+'" download title="Télécharger" aria-label="Télécharger" style="text-decoration:none">↓</a></div></div></article>').join("");
+    const visible = data.filter(w => communityDeviceFilter === "all" || (w.device_type || "pc") === communityDeviceFilter);
+    if(!visible.length){root.innerHTML='<div class="empty">Aucun fond d’écran pour cet appareil pour le moment.</div>';return;}
+    root.innerHTML=visible.map(w=>'<article class="wallcard"><div class="community-image '+((w.device_type||"pc")==="phone"?"phone":"pc")+'"><img loading="lazy" src="'+esc(w.image_url)+'" alt="'+esc(w.title)+'"></div><div class="wallmeta"><div><div class="walltitle">'+esc(w.title)+'</div><div class="wallsub">'+esc(w.device_type==="phone"?"Téléphone":"PC")+' · '+esc(w.category)+' · '+esc(w.description||"Wallpaper Studio")+'</div></div><div class="cardactions"><button class="iconbtn favbtn" data-id="'+esc(w.id)+'" title="Ajouter aux favoris" aria-label="Ajouter aux favoris">♡</button><a class="iconbtn" href="'+esc(w.image_url)+'" download title="Télécharger" aria-label="Télécharger" style="text-decoration:none">↓</a></div></div></article>').join("");
     root.querySelectorAll(".favbtn").forEach(b=>b.onclick=()=>toggleFavorite(b.dataset.id,b));
     if(currentUser) await markFavorites();
   }
@@ -306,7 +317,7 @@ document.getElementById("search").addEventListener("input",render);document.getE
       const {error:upErr}=await client.storage.from("wallpapers").upload(path,file,{contentType:file.type,upsert:false});
       if(upErr)throw upErr;
       const {data:{publicUrl}}=client.storage.from("wallpapers").getPublicUrl(path);
-      const {error:dbErr}=await client.from("wallpapers").insert({title:$("wallTitle").value.trim(),description:$("wallDescription").value.trim(),category:$("wallCategory").value,image_path:path,image_url:publicUrl,is_published:true,created_by:currentUser.id});
+      const {error:dbErr}=await client.from("wallpapers").insert({title:$("wallTitle").value.trim(),description:$("wallDescription").value.trim(),category:$("wallCategory").value,device_type:$("wallDevice").value,image_path:path,image_url:publicUrl,is_published:true,created_by:currentUser.id});
       if(dbErr){await client.storage.from("wallpapers").remove([path]);throw dbErr;}
       status("uploadStatus","Publication réussie.");$("uploadForm").reset();await loadCommunity();
     }catch(err){status("uploadStatus",err.message||"Échec de la publication.",true);}
