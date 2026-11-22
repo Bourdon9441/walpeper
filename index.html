@@ -167,21 +167,49 @@ document.getElementById("search").addEventListener("input",render);document.getE
         if(data.session) { status("authStatus","Compte créé. Connexion réussie."); await refreshSession(); }
         else status("authStatus","Compte créé. Consultez votre boîte e-mail pour confirmer l’adresse, puis connectez-vous.");
       } else {
-        const {error}=await client.auth.signInWithPassword({email,password}); if(error) throw error;
-        await refreshSession(); closeAuth();
+        const {data,error}=await client.auth.signInWithPassword({email,password});
+        if(error) throw error;
+        if(!data?.session || !data?.user) throw new Error("Connexion réussie côté serveur, mais aucune session n’a été reçue par le navigateur. Réessayez après avoir autorisé les cookies du site.");
+        await syncSession(data.session);
+        closeAuth();
       }
     } catch(err) { status("authStatus",err.message || "Une erreur est survenue.",true); }
     finally {$("authSubmit").disabled=false;}
   });
-  async function refreshSession() {
-    const {data:{session}}=await client.auth.getSession();
-    currentUser=session?.user||null; currentProfile=null;
-    if(currentUser) {
-      const {data,error}=await client.from("profiles").select("id,email,username,role").eq("id",currentUser.id).maybeSingle();
-      if(!error) currentProfile=data;
+  let sessionRevision = 0;
+  async function syncSession(session) {
+    const revision = ++sessionRevision;
+    currentUser = session?.user || null;
+    currentProfile = null;
+    renderMember();
+
+    if (currentUser) {
+      const userId = currentUser.id;
+      const { data, error } = await client
+        .from("profiles")
+        .select("id,email,username,role")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (revision !== sessionRevision) return;
+      if (error) {
+        console.error("Erreur de lecture du profil :", error);
+        status("authStatus", "Connexion active, mais le profil n’a pas pu être chargé. " + error.message, true);
+      } else {
+        currentProfile = data;
+      }
     }
-    renderMember(); if(currentProfile?.role==="admin") showAdminHint();
+
+    if (revision !== sessionRevision) return;
+    renderMember();
+    if (currentProfile?.role === "admin") showAdminHint();
     await loadCommunity();
+  }
+
+  async function refreshSession() {
+    const { data, error } = await client.auth.getSession();
+    if (error) throw error;
+    await syncSession(data.session);
   }
   function renderMember() {
     const line=$("memberLine");
@@ -238,8 +266,12 @@ document.getElementById("search").addEventListener("input",render);document.getE
     }catch(err){status("uploadStatus",err.message||"Échec de la publication.",true);}
     finally{btn.disabled=false;}
   });
-  client.auth.onAuthStateChange(()=>{setTimeout(()=>refreshSession(),0);});
-  refreshSession();
+  client.auth.onAuthStateChange((event, session) => {
+    if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION" || event === "USER_UPDATED") {
+      setTimeout(() => syncSession(session).catch(err => console.error("Mise à jour de session impossible :", err)), 0);
+    }
+  });
+  refreshSession().catch(err => console.error("Initialisation de session impossible :", err));
 })();
 </script>
 
