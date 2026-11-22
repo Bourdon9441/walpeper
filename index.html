@@ -133,7 +133,7 @@ document.getElementById("search").addEventListener("input",render);document.getE
     $("authSubmit").disabled=true; status("authStatus",signupMode?"Création du compte…":"Connexion…");
     try {
       if(signupMode) {
-        const {data,error}=await client.auth.signUp({email,password,options:{data:{username:$("authUsername").value.trim()}}});
+        const {data,error}=await client.auth.signUp({email,password,options:{data:{username:$("authUsername").value.trim()},emailRedirectTo:window.location.origin+"/"}});
         if(error) throw error;
         if(data.session) { status("authStatus","Compte créé. Connexion réussie."); await refreshSession(); }
         else status("authStatus","Compte créé. Consultez votre boîte e-mail pour confirmer l’adresse, puis connectez-vous.");
