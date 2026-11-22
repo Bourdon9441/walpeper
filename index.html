@@ -28,7 +28,7 @@ footer{border-top:1px solid #222;padding:25px 0 35px;color:#666;font-size:11px}.
 .authrow{display:flex;gap:8px;margin-top:16px}.authrow>*{flex:1}.authstatus{font-size:11px;color:#aaa;min-height:18px;margin-top:12px}.authclose{float:right;border:1px solid #333;background:#111;color:#ddd;border-radius:7px;width:30px;height:30px}
 .memberline{display:flex;align-items:center;gap:9px;color:#aaa;font-size:11px}.memberline button{font-size:11px}
 .community{padding:0 0 85px}.community .grid{margin-top:18px}.community-image{width:100%;aspect-ratio:16/9;border-radius:7px;overflow:hidden;background:#111}.community-image.phone{aspect-ratio:9/16;max-height:520px}.community-image.pc{aspect-ratio:16/9}.community-image img{width:100%;height:100%;object-fit:contain;display:block}.devicefilters{display:flex;gap:7px;flex-wrap:wrap;margin:16px 0 4px}.devicefilter{border:1px solid #292929;border-radius:7px;padding:8px 12px;background:#090909;color:#888;font-size:11px}.devicefilter.active{background:#f5f5f5;color:#080808;border-color:#f5f5f5}
-.uploadarea{border:1px dashed #444;border-radius:10px;padding:15px;margin-top:12px}.uploadarea .btn{margin-top:12px}.adminhint{font-size:11px;color:#777;line-height:1.6;margin-top:10px}
+.uploadarea{border:1px dashed #444;border-radius:10px;padding:15px;margin-top:12px}.uploadarea .btn{margin-top:12px}.adminhint{font-size:11px;color:#777;line-height:1.6;margin-top:10px}.adminmanage{margin-top:24px;border-top:1px solid #292929;padding-top:18px}.adminlist{display:grid;gap:9px;margin-top:12px;max-height:260px;overflow:auto}.adminitem{display:flex;align-items:center;gap:10px;padding:8px;border:1px solid #292929;border-radius:8px}.adminitem img{width:54px;height:54px;object-fit:cover;border-radius:5px;background:#171717}.adminiteminfo{min-width:0;flex:1}.adminiteminfo strong{display:block;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.adminiteminfo small{display:block;color:#888;font-size:10px;margin-top:4px}.deletewall{border:1px solid #633;background:#211010;color:#ffb5b5;border-radius:6px;padding:7px 9px;font-size:11px;cursor:pointer}.deletewall:disabled{opacity:.5;cursor:wait}
 @media(max-width:540px){.authbox{padding:20px}.community-image{height:230px}}
 
 </style>
@@ -65,7 +65,7 @@ footer{border-top:1px solid #222;padding:25px 0 35px;color:#666;font-size:11px}.
 <label for="wallFile">Image (JPG, PNG, WebP ou AVIF — 15 Mo maximum)</label><input id="wallFile" type="file" accept="image/jpeg,image/png,image/webp,image/avif" required>
 <button class="btn light" type="submit" style="width:100%;margin-top:16px">Publier la création</button></form>
 <div class="authstatus" id="uploadStatus" role="status"></div>
-<div class="adminhint" id="adminHint"></div></div></div>
+<div class="adminhint" id="adminHint"></div><section class="adminmanage"><h3 style="font-size:15px;margin:0">Gérer les publications</h3><p style="font-size:11px;color:#888;margin:6px 0">Consultez et supprimez vos fonds publiés.</p><button class="btn" type="button" id="refreshAdminWallpapers">Actualiser la liste</button><div class="adminlist" id="adminWallpaperList"><div class="empty">Chargement des publications…</div></div></section></div></div>
 
 <script>
 const items=[
@@ -249,7 +249,7 @@ document.getElementById("search").addEventListener("input",render);document.getE
 
     if (revision !== sessionRevision) return;
     renderMember();
-    if (currentProfile?.role === "admin") showAdminHint();
+    if (currentProfile?.role === "admin") { showAdminHint(); await loadAdminWallpapers(); }
     await loadCommunity();
   }
 
@@ -268,6 +268,30 @@ document.getElementById("search").addEventListener("input",render);document.getE
     const out=document.createElement("button"); out.className="btn"; out.textContent="Déconnexion"; out.onclick=async()=>{await client.auth.signOut();await refreshSession();}; line.append(out);
     $("accountBtn").textContent="Mon compte ↗";
   }
+  async function loadAdminWallpapers(){
+    const root=$("adminWallpaperList");
+    if(!currentUser||currentProfile?.role!=="admin"){root.innerHTML='<div class="empty">Accès administrateur requis.</div>';return;}
+    root.innerHTML='<div class="empty">Chargement…</div>';
+    const {data,error}=await client.from("wallpapers").select("id,title,category,device_type,image_url,image_path,is_published,created_at").order("created_at",{ascending:false});
+    if(error){root.innerHTML='<div class="empty">Erreur : '+esc(error.message)+'</div>';return;}
+    if(!data?.length){root.innerHTML='<div class="empty">Aucun fond publié.</div>';return;}
+    root.innerHTML=data.map(w=>'<div class="adminitem"><img src="'+esc(w.image_url)+'" alt=""><div class="adminiteminfo"><strong>'+esc(w.title)+'</strong><small>'+esc(w.device_type==="phone"?"Téléphone":"PC")+' · '+esc(w.category)+' · '+(w.is_published?"En ligne":"Masqué")+'</small></div><button class="deletewall" type="button" data-delete-wallpaper="'+esc(w.id)+'">Supprimer</button></div>').join("");
+  }
+  $("refreshAdminWallpapers").addEventListener("click",loadAdminWallpapers);
+  $("adminWallpaperList").addEventListener("click",async e=>{
+    const button=e.target.closest("[data-delete-wallpaper]");if(!button)return;
+    const id=button.dataset.deleteWallpaper;
+    if(!confirm("Supprimer définitivement ce fond d’écran et son fichier ? Cette action est irréversible."))return;
+    button.disabled=true;
+    try{
+      const {data,error}=await client.from("wallpapers").select("image_path").eq("id",id).single();
+      if(error)throw error;
+      const {error:deleteError}=await client.from("wallpapers").delete().eq("id",id);
+      if(deleteError)throw deleteError;
+      if(data?.image_path){const {error:storageError}=await client.storage.from("wallpapers").remove([data.image_path]);if(storageError)console.warn("Ligne supprimée, mais le fichier n’a pas pu être retiré :",storageError.message);}
+      await loadAdminWallpapers();await loadCommunity();
+    }catch(err){alert("Suppression impossible : "+(err.message||"Erreur inconnue"));button.disabled=false;}
+  });
   function showAdminHint() {
     const sql="update public.profiles set role = 'admin' where id = '"+currentUser.id+"';";
     $("adminHint").textContent="Votre compte possède le rôle administrateur.";
@@ -319,7 +343,7 @@ document.getElementById("search").addEventListener("input",render);document.getE
       const {data:{publicUrl}}=client.storage.from("wallpapers").getPublicUrl(path);
       const {error:dbErr}=await client.from("wallpapers").insert({title:$("wallTitle").value.trim(),description:$("wallDescription").value.trim(),category:$("wallCategory").value,device_type:$("wallDevice").value,image_path:path,image_url:publicUrl,is_published:true,created_by:currentUser.id});
       if(dbErr){await client.storage.from("wallpapers").remove([path]);throw dbErr;}
-      status("uploadStatus","Publication réussie.");$("uploadForm").reset();await loadCommunity();
+      status("uploadStatus","Publication réussie.");$("uploadForm").reset();await loadCommunity();await loadAdminWallpapers();
     }catch(err){status("uploadStatus",err.message||"Échec de la publication.",true);}
     finally{btn.disabled=false;}
   });
