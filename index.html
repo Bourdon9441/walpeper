@@ -20,6 +20,17 @@ footer{border-top:1px solid #222;padding:25px 0 35px;color:#666;font-size:11px}.
 .modal{position:fixed;inset:0;z-index:60;background:#000d;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(12px)}.modal.open{display:flex}.modalbox{width:min(800px,100%);background:#090909;border:1px solid #333;border-radius:14px;padding:12px;box-shadow:0 30px 100px #000}.modalimage{height:min(62vh,520px);border-radius:8px;overflow:hidden}.modalimage svg{width:100%;height:100%;display:block}.modalfoot{display:flex;align-items:center;justify-content:space-between;padding:13px 3px 2px}.modalfoot strong{font-size:13px}.modalfoot small{display:block;color:#777;margin-top:4px}.close{position:absolute;top:22px;right:25px;width:38px;height:38px;border:1px solid #555;background:#111;color:#fff;border-radius:50%;font-size:19px}
 @media(max-width:800px){.links{display:none}.menu{display:block}.hero{padding:76px 0 55px}.preview-strip{margin-bottom:70px}.preview-tile{height:120px}.grid{grid-template-columns:repeat(2,1fr)}.wallimage{height:220px}.statement{align-items:flex-start;flex-direction:column}.sectiontop{align-items:flex-start;flex-direction:column}.tools,.searchwrap,.search{width:100%}}
 @media(max-width:540px){.container{width:calc(100% - 30px)}header{height:65px}.right .btn:not(.light){display:none}.hero{padding:65px 0 42px}.hero h1{letter-spacing:-3px}.hero p{font-size:13px}.hero-note{margin-top:38px}.preview-strip{grid-template-columns:repeat(2,1fr);gap:8px}.preview-tile{height:115px}.preview-tile:nth-child(n){transform:none}.section h2{font-size:25px}.grid{grid-template-columns:1fr;gap:12px}.wallimage{height:250px}.statement{padding:35px 0;margin-bottom:50px}.foot{flex-direction:column}}
+
+.authmodal,.adminpanel{position:fixed;inset:0;z-index:80;background:#000e;display:none;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(12px)}
+.authmodal.open,.adminpanel.open{display:flex}.authbox{width:min(430px,100%);background:#0b0b0b;border:1px solid #333;border-radius:15px;padding:25px;box-shadow:0 25px 90px #000}
+.authbox h2{font:700 25px Manrope,sans-serif;letter-spacing:-1px;margin:0 0 8px}.authbox p{color:#888;font-size:12px;line-height:1.6;margin:0 0 20px}
+.authbox label{display:block;color:#aaa;font-size:11px;margin:13px 0 6px}.authbox input,.authbox select,.authbox textarea{width:100%;height:42px;border:1px solid #333;border-radius:8px;background:#111;color:#fff;padding:0 12px;outline:none;font:13px 'DM Sans',sans-serif}.authbox input:focus,.authbox textarea:focus{border-color:#888}
+.authrow{display:flex;gap:8px;margin-top:16px}.authrow>*{flex:1}.authstatus{font-size:11px;color:#aaa;min-height:18px;margin-top:12px}.authclose{float:right;border:1px solid #333;background:#111;color:#ddd;border-radius:7px;width:30px;height:30px}
+.memberline{display:flex;align-items:center;gap:9px;color:#aaa;font-size:11px}.memberline button{font-size:11px}
+.community{padding:0 0 85px}.community .grid{margin-top:18px}.community-image{height:250px;border-radius:7px;overflow:hidden;background:#111}.community-image img{width:100%;height:100%;object-fit:cover;display:block}
+.uploadarea{border:1px dashed #444;border-radius:10px;padding:15px;margin-top:12px}.uploadarea .btn{margin-top:12px}.adminhint{font-size:11px;color:#777;line-height:1.6;margin-top:10px}
+@media(max-width:540px){.authbox{padding:20px}.community-image{height:230px}}
+
 </style>
 </head>
 <body><div class="topline"></div>
@@ -28,10 +39,33 @@ footer{border-top:1px solid #222;padding:25px 0 35px;color:#666;font-size:11px}.
 <section class="hero"><div class="pill"><span class="pulse"></span> COLLECTION DIGITALE · ÉDITION 001</div><h1>Your screen,<br><span>reimagined.</span></h1><p>Des fonds d’écran choisis avec intention. Une collection épurée pour donner une nouvelle dimension à vos écrans.</p><div class="heroactions"><button class="btn light" onclick="document.getElementById('collection').scrollIntoView({behavior:'smooth'})">Découvrir la collection&nbsp; ↓</button><button class="btn" onclick="document.getElementById('studio').scrollIntoView({behavior:'smooth'})">À propos du studio</button></div><div class="hero-note">DESIGN · DIGITAL ART · WALLPAPERS</div></section>
 <div class="preview-strip" id="previewStrip"></div>
 <section class="section" id="collection"><div class="sectiontop"><div><div class="overline">01 — LA COLLECTION</div><h2>Une sélection à part.</h2><p>Explorez, prévisualisez et téléchargez votre prochain fond d’écran.</p></div><div class="tools"><div class="searchwrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input class="search" id="search" type="search" placeholder="Rechercher une création…"></div></div></div><div class="filters" id="filters"><button class="filter active" data-filter="Tous">Tout</button><button class="filter" data-filter="Abstrait">Abstrait</button><button class="filter" data-filter="Nature">Nature</button><button class="filter" data-filter="Minimaliste">Minimaliste</button><button class="filter" data-filter="Architecture">Architecture</button><button class="filter" data-filter="Dégradé">Dégradé</button></div><div class="grid" id="gallery"></div></section>
+
+<section class="section community" id="communityCollection">
+<div class="sectiontop"><div><div class="overline">03 — LA COMMUNAUTÉ</div><h2>Les créations publiées.</h2><p>Les fonds d’écran partagés par Wallpaper Studio.</p></div><div class="memberline" id="memberLine">Connexion non requise pour explorer.</div></div>
+<div class="grid" id="communityGallery"><div class="empty">Chargement de la collection…</div></div>
+</section>
 <section class="statement" id="studio"><div><div class="overline">02 — LE STUDIO</div><h2>Moins de bruit. Plus de personnalité.</h2></div><p>Wallpaper Studio est un espace dédié aux fonds d’écran et à la création visuelle. Une expérience simple, soignée et pensée pour vos appareils.</p></section>
 </main>
 <footer><div class="container foot"><span><strong>Wallpaper Studio</strong> © 2026 — Tous droits réservés.</span><span>Une collection indépendante.</span></div></footer>
 <div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="Aperçu du fond d'écran"><button class="close" id="closeModal" aria-label="Fermer">×</button><div class="modalbox"><div class="modalimage" id="modalImage"></div><div class="modalfoot"><div><strong id="modalTitle"></strong><small id="modalSub"></small></div><button class="btn light" id="modalDownload">Télécharger ↓</button></div></div></div>
+
+<div class="authmodal" id="authModal" role="dialog" aria-modal="true" aria-label="Espace membre"><div class="authbox">
+<button class="authclose" id="authClose" aria-label="Fermer">×</button><div class="overline">WALLPAPER STUDIO</div><h2 id="authHeading">Votre espace.</h2><p id="authIntro">Connectez-vous pour retrouver vos favoris et votre compte.</p>
+<form id="authForm"><label for="authEmail">Adresse e-mail</label><input id="authEmail" type="email" autocomplete="email" required placeholder="vous@exemple.fr">
+<label for="authPassword">Mot de passe</label><input id="authPassword" type="password" autocomplete="current-password" minlength="8" required placeholder="8 caractères minimum">
+<div id="usernameField" style="display:none"><label for="authUsername">Nom d’utilisateur</label><input id="authUsername" type="text" maxlength="30" placeholder="Votre pseudo"></div>
+<div class="authrow"><button class="btn light" id="authSubmit" type="submit">Se connecter</button><button class="btn" id="toggleAuth" type="button">Créer un compte</button></div></form>
+<div class="authstatus" id="authStatus" role="status"></div></div></div>
+<div class="adminpanel" id="adminPanel" role="dialog" aria-modal="true" aria-label="Administration"><div class="authbox">
+<button class="authclose" id="adminClose" aria-label="Fermer">×</button><div class="overline">ADMINISTRATION</div><h2>Publier un fond.</h2><p>Les publications sont visibles publiquement après leur envoi.</p>
+<form id="uploadForm"><label for="wallTitle">Titre</label><input id="wallTitle" required maxlength="80" placeholder="Ex. : Horizon calme">
+<label for="wallCategory">Catégorie</label><select id="wallCategory"><option>Abstrait</option><option>Nature</option><option>Minimaliste</option><option>Architecture</option><option>Dégradé</option></select>
+<label for="wallDescription">Description</label><textarea id="wallDescription" rows="2" style="height:70px;padding:10px" maxlength="300" placeholder="Quelques mots sur cette création"></textarea>
+<label for="wallFile">Image (JPG, PNG, WebP ou AVIF — 15 Mo maximum)</label><input id="wallFile" type="file" accept="image/jpeg,image/png,image/webp,image/avif" required>
+<button class="btn light" type="submit" style="width:100%;margin-top:16px">Publier la création</button></form>
+<div class="authstatus" id="uploadStatus" role="status"></div>
+<div class="adminhint" id="adminHint"></div></div></div>
+
 <script>
 const items=[
 {name:"Monochrome 01",cat:"Minimaliste",detail:"Équilibre · Série monochrome",type:"mono",colors:["#171717","#777","#e8e8e8"]},
@@ -63,4 +97,121 @@ let active="Tous",selected=null;function render(){const q=document.getElementByI
 function openPreview(w){selected=w;document.getElementById("modalImage").innerHTML=art(w);document.getElementById("modalTitle").textContent=w.name;document.getElementById("modalSub").textContent=w.cat+" · "+w.detail;document.getElementById("modal").classList.add("open")}
 function closePreview(){document.getElementById("modal").classList.remove("open")}document.getElementById("closeModal").onclick=closePreview;document.getElementById("modal").onclick=e=>{if(e.target.id==="modal")closePreview()};document.getElementById("modalDownload").onclick=()=>selected&&download(selected);document.addEventListener("keydown",e=>{if(e.key==="Escape")closePreview()});
 document.getElementById("search").addEventListener("input",render);document.getElementById("filters").addEventListener("click",e=>{const b=e.target.closest("[data-filter]");if(!b)return;active=b.dataset.filter;document.querySelectorAll(".filter").forEach(x=>x.classList.toggle("active",x===b));render()});document.getElementById("accountBtn").onclick=()=>alert("L'espace membre sera activé après la configuration sécurisée des comptes.");render();
-</script></body></html>
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(() => {
+  const SUPABASE_URL = "https://owjzextyjjzkikzwqmln.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_VCW8Fv7jtgg1Fbl1LoIH1A_8k6hLfq8";
+  const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const $ = (id) => document.getElementById(id);
+  let currentUser = null, currentProfile = null, signupMode = false;
+  const authModal = $("authModal"), adminPanel = $("adminPanel");
+  function status(id, message, error) {
+    const el = $(id); el.textContent = message || ""; el.style.color = error ? "#ff8d8d" : "#aaa";
+  }
+  function openAuth() { authModal.classList.add("open"); status("authStatus",""); }
+  function closeAuth() { authModal.classList.remove("open"); }
+  $("accountBtn").onclick = () => currentUser ? (currentProfile && currentProfile.role === "admin" ? adminPanel.classList.add("open") : openAuth()) : openAuth();
+  $("authClose").onclick = closeAuth;
+  $("adminClose").onclick = () => adminPanel.classList.remove("open");
+  authModal.addEventListener("click",e=>{if(e.target===authModal)closeAuth();});
+  adminPanel.addEventListener("click",e=>{if(e.target===adminPanel)adminPanel.classList.remove("open");});
+  $("toggleAuth").onclick = () => {
+    signupMode = !signupMode;
+    $("authHeading").textContent = signupMode ? "Rejoignez le studio." : "Votre espace.";
+    $("authIntro").textContent = signupMode ? "Créez un compte pour enregistrer vos fonds favoris." : "Connectez-vous pour retrouver vos favoris et votre compte.";
+    $("usernameField").style.display = signupMode ? "block" : "none";
+    $("authSubmit").textContent = signupMode ? "Créer mon compte" : "Se connecter";
+    $("toggleAuth").textContent = signupMode ? "J’ai déjà un compte" : "Créer un compte";
+    $("authPassword").autocomplete = signupMode ? "new-password" : "current-password";
+    status("authStatus","");
+  };
+  $("authForm").addEventListener("submit",async e=>{
+    e.preventDefault(); const email=$("authEmail").value.trim(), password=$("authPassword").value;
+    $("authSubmit").disabled=true; status("authStatus",signupMode?"Création du compte…":"Connexion…");
+    try {
+      if(signupMode) {
+        const {data,error}=await client.auth.signUp({email,password,options:{data:{username:$("authUsername").value.trim()}}});
+        if(error) throw error;
+        if(data.session) { status("authStatus","Compte créé. Connexion réussie."); await refreshSession(); }
+        else status("authStatus","Compte créé. Consultez votre boîte e-mail pour confirmer l’adresse, puis connectez-vous.");
+      } else {
+        const {error}=await client.auth.signInWithPassword({email,password}); if(error) throw error;
+        await refreshSession(); closeAuth();
+      }
+    } catch(err) { status("authStatus",err.message || "Une erreur est survenue.",true); }
+    finally {$("authSubmit").disabled=false;}
+  });
+  async function refreshSession() {
+    const {data:{session}}=await client.auth.getSession();
+    currentUser=session?.user||null; currentProfile=null;
+    if(currentUser) {
+      const {data,error}=await client.from("profiles").select("id,email,username,role").eq("id",currentUser.id).maybeSingle();
+      if(!error) currentProfile=data;
+    }
+    renderMember(); if(currentProfile?.role==="admin") showAdminHint();
+    await loadCommunity();
+  }
+  function renderMember() {
+    const line=$("memberLine");
+    if(!currentUser) { line.textContent="Explorez librement · Connexion facultative"; $("accountBtn").textContent="Espace membre ↗"; return; }
+    const name=currentProfile?.username||currentUser.email;
+    line.replaceChildren();
+    const label=document.createElement("span"); label.textContent="Connecté : "+name; line.append(label);
+    if(currentProfile?.role==="admin") { const b=document.createElement("button"); b.className="btn"; b.textContent="Administration"; b.onclick=()=>adminPanel.classList.add("open"); line.append(b); }
+    const out=document.createElement("button"); out.className="btn"; out.textContent="Déconnexion"; out.onclick=async()=>{await client.auth.signOut();await refreshSession();}; line.append(out);
+    $("accountBtn").textContent="Mon compte ↗";
+  }
+  function showAdminHint() {
+    const sql="update public.profiles set role = 'admin' where id = '"+currentUser.id+"';";
+    $("adminHint").textContent="Votre compte possède le rôle administrateur.";
+  }
+  function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+  async function loadCommunity() {
+    const root=$("communityGallery");
+    const {data,error}=await client.from("wallpapers").select("id,title,description,category,image_url,created_at").eq("is_published",true).order("created_at",{ascending:false});
+    if(error){root.innerHTML='<div class="empty">La collection communautaire sera disponible dès que la base sera initialisée.</div>';return;}
+    if(!data?.length){root.innerHTML='<div class="empty">Aucune publication pour le moment. Revenez bientôt.</div>';return;}
+    root.innerHTML=data.map(w=>'<article class="wallcard"><div class="community-image"><img loading="lazy" src="'+esc(w.image_url)+'" alt="'+esc(w.title)+'"></div><div class="wallmeta"><div><div class="walltitle">'+esc(w.title)+'</div><div class="wallsub">'+esc(w.category)+' · '+esc(w.description||"Wallpaper Studio")+'</div></div><div class="cardactions"><button class="iconbtn favbtn" data-id="'+esc(w.id)+'" title="Ajouter aux favoris" aria-label="Ajouter aux favoris">♡</button><a class="iconbtn" href="'+esc(w.image_url)+'" download title="Télécharger" aria-label="Télécharger" style="text-decoration:none">↓</a></div></div></article>').join("");
+    root.querySelectorAll(".favbtn").forEach(b=>b.onclick=()=>toggleFavorite(b.dataset.id,b));
+    if(currentUser) await markFavorites();
+  }
+  async function markFavorites(){
+    const {data}=await client.from("favorites").select("wallpaper_id").eq("user_id",currentUser.id);
+    const ids=new Set((data||[]).map(x=>x.wallpaper_id));
+    document.querySelectorAll(".favbtn").forEach(b=>{if(ids.has(b.dataset.id)){b.textContent="♥";b.title="Retirer des favoris";}});
+  }
+  async function toggleFavorite(id,button){
+    if(!currentUser){openAuth();status("authStatus","Connectez-vous pour enregistrer vos favoris.");return;}
+    const exists=button.textContent==="♥";
+    const result=exists?await client.from("favorites").delete().eq("user_id",currentUser.id).eq("wallpaper_id",id):await client.from("favorites").insert({user_id:currentUser.id,wallpaper_id:id});
+    if(result.error){alert(result.error.message);return;}
+    button.textContent=exists?"♡":"♥";button.title=exists?"Ajouter aux favoris":"Retirer des favoris";
+  }
+  $("uploadForm").addEventListener("submit",async e=>{
+    e.preventDefault();
+    if(!currentUser||currentProfile?.role!=="admin"){status("uploadStatus","Accès administrateur requis.",true);return;}
+    const file=$("wallFile").files[0]; if(!file)return;
+    if(file.size>15*1024*1024){status("uploadStatus","Fichier trop volumineux (15 Mo maximum).",true);return;}
+    const ext=(file.name.split(".").pop()||"jpg").toLowerCase();
+    if(!["jpg","jpeg","png","webp","avif"].includes(ext)){status("uploadStatus","Format non accepté.",true);return;}
+    const path=currentUser.id+"/"+crypto.randomUUID()+"."+ext;
+    const btn=$("uploadForm").querySelector('button[type="submit"]');btn.disabled=true;status("uploadStatus","Envoi de l’image…");
+    try{
+      const {error:upErr}=await client.storage.from("wallpapers").upload(path,file,{contentType:file.type,upsert:false});
+      if(upErr)throw upErr;
+      const {data:{publicUrl}}=client.storage.from("wallpapers").getPublicUrl(path);
+      const {error:dbErr}=await client.from("wallpapers").insert({title:$("wallTitle").value.trim(),description:$("wallDescription").value.trim(),category:$("wallCategory").value,image_path:path,image_url:publicUrl,is_published:true,created_by:currentUser.id});
+      if(dbErr){await client.storage.from("wallpapers").remove([path]);throw dbErr;}
+      status("uploadStatus","Publication réussie.");$("uploadForm").reset();await loadCommunity();
+    }catch(err){status("uploadStatus",err.message||"Échec de la publication.",true);}
+    finally{btn.disabled=false;}
+  });
+  client.auth.onAuthStateChange(()=>{setTimeout(()=>refreshSession(),0);});
+  refreshSession();
+})();
+</script>
+
+</body></html>
