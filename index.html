@@ -113,7 +113,36 @@ document.getElementById("search").addEventListener("input",render);document.getE
   }
   function openAuth() { authModal.classList.add("open"); status("authStatus",""); }
   function closeAuth() { authModal.classList.remove("open"); }
-  $("accountBtn").onclick = () => currentUser ? (currentProfile && currentProfile.role === "admin" ? adminPanel.classList.add("open") : openAuth()) : openAuth();
+  function openMemberPanel() {
+    let panel = $("memberPanel");
+    if (!panel) {
+      panel = document.createElement("div");
+      panel.id = "memberPanel";
+      panel.className = "adminpanel";
+      panel.setAttribute("role", "dialog");
+      panel.setAttribute("aria-modal", "true");
+      panel.setAttribute("aria-label", "Mon compte");
+      panel.innerHTML = '<div class="authbox"><button class="authclose" id="memberClose" aria-label="Fermer">×</button><div class="overline">WALLPAPER STUDIO</div><h2>Mon compte.</h2><p id="memberIdentity"></p><div class="authrow"><button class="btn" id="memberLogout" type="button">Déconnexion</button></div><div class="authstatus" id="memberStatus" role="status"></div></div>';
+      document.body.appendChild(panel);
+      $("memberClose").onclick = () => panel.classList.remove("open");
+      panel.addEventListener("click", e => { if (e.target === panel) panel.classList.remove("open"); });
+      $("memberLogout").onclick = async () => {
+        $("memberLogout").disabled = true;
+        const { error } = await client.auth.signOut();
+        if (error) { $("memberStatus").textContent = error.message; $("memberLogout").disabled = false; return; }
+        panel.classList.remove("open");
+        await refreshSession();
+      };
+    }
+    const username = currentProfile?.username || currentUser?.user_metadata?.username || "Membre";
+    $("memberIdentity").textContent = username + " · " + (currentUser?.email || "");
+    panel.classList.add("open");
+  }
+  $("accountBtn").onclick = () => {
+    if (!currentUser) { openAuth(); return; }
+    if (currentProfile?.role === "admin") adminPanel.classList.add("open");
+    else openMemberPanel();
+  };
   $("authClose").onclick = closeAuth;
   $("adminClose").onclick = () => adminPanel.classList.remove("open");
   authModal.addEventListener("click",e=>{if(e.target===authModal)closeAuth();});
