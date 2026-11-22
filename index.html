@@ -138,10 +138,27 @@ document.getElementById("search").addEventListener("input",render);document.getE
     $("memberIdentity").textContent = username + " · " + (currentUser?.email || "");
     panel.classList.add("open");
   }
-  $("accountBtn").onclick = () => {
-    if (!currentUser) { openAuth(); return; }
-    if (currentProfile?.role === "admin") adminPanel.classList.add("open");
-    else openMemberPanel();
+  $("accountBtn").onclick = async () => {
+    const button = $("accountBtn");
+    button.disabled = true;
+    try {
+      // Relire la session persistée avant de décider quel espace ouvrir.
+      const { data, error } = await client.auth.getSession();
+      if (error) throw error;
+      await syncSession(data.session);
+      if (!data.session?.user) {
+        openAuth();
+        return;
+      }
+      if (currentProfile?.role === "admin") adminPanel.classList.add("open");
+      else openMemberPanel();
+    } catch (err) {
+      console.error("Vérification de session impossible :", err);
+      openAuth();
+      status("authStatus", "Impossible de vérifier votre session. " + (err.message || ""), true);
+    } finally {
+      button.disabled = false;
+    }
   };
   $("authClose").onclick = closeAuth;
   $("adminClose").onclick = () => adminPanel.classList.remove("open");
@@ -170,7 +187,11 @@ document.getElementById("search").addEventListener("input",render);document.getE
         const {data,error}=await client.auth.signInWithPassword({email,password});
         if(error) throw error;
         if(!data?.session || !data?.user) throw new Error("Connexion réussie côté serveur, mais aucune session n’a été reçue par le navigateur. Réessayez après avoir autorisé les cookies du site.");
-        await syncSession(data.session);
+        // Vérifier que Supabase a bien conservé la session dans le navigateur.
+        await refreshSession();
+        if (!currentUser) {
+          throw new Error("Vos identifiants sont acceptés, mais la session n’est pas conservée dans le navigateur. Vérifiez les paramètres de stockage du site.");
+        }
         closeAuth();
       }
     } catch(err) { status("authStatus",err.message || "Une erreur est survenue.",true); }
@@ -266,9 +287,11 @@ document.getElementById("search").addEventListener("input",render);document.getE
     }catch(err){status("uploadStatus",err.message||"Échec de la publication.",true);}
     finally{btn.disabled=false;}
   });
-  client.auth.onAuthStateChange((event, session) => {
-    if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION" || event === "USER_UPDATED") {
-      setTimeout(() => syncSession(session).catch(err => console.error("Mise à jour de session impossible :", err)), 0);
+  client.auth.onAuthStateChange((event) => {
+    if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") {
+      // Ne pas réutiliser un objet session potentiellement ancien de l’événement :
+      // relire l’état réellement persisté par Supabase.
+      setTimeout(() => refreshSession().catch(err => console.error("Mise à jour de session impossible :", err)), 0);
     }
   });
   refreshSession().catch(err => console.error("Initialisation de session impossible :", err));
