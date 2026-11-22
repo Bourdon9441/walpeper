@@ -99,12 +99,37 @@ function closePreview(){document.getElementById("modal").classList.remove("open"
 document.getElementById("search").addEventListener("input",render);document.getElementById("filters").addEventListener("click",e=>{const b=e.target.closest("[data-filter]");if(!b)return;active=b.dataset.filter;document.querySelectorAll(".filter").forEach(x=>x.classList.toggle("active",x===b));render()});document.getElementById("accountBtn").onclick=()=>alert("L'espace membre sera activé après la configuration sécurisée des comptes.");render();
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2"></script>
 <script>
 (() => {
   const SUPABASE_URL = "https://owjzextyjjzkikzwqmln.supabase.co";
   const SUPABASE_KEY = "sb_publishable_VCW8Fv7jtgg1Fbl1LoIH1A_8k6hLfq8";
-  const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const memoryStore = {};
+  const sessionStorageAdapter = {
+    getItem(key) {
+      try {
+        const value = window.localStorage.getItem(key);
+        if (value !== null && value !== undefined) return value;
+      } catch (e) {}
+      return Object.prototype.hasOwnProperty.call(memoryStore, key) ? memoryStore[key] : null;
+    },
+    setItem(key, value) {
+      memoryStore[key] = value;
+      try { window.localStorage.setItem(key, value); } catch (e) {}
+    },
+    removeItem(key) {
+      delete memoryStore[key];
+      try { window.localStorage.removeItem(key); } catch (e) {}
+    }
+  };
+  const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: {
+      storage: sessionStorageAdapter,
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true
+    }
+  });
   const $ = (id) => document.getElementById(id);
   let currentUser = null, currentProfile = null, signupMode = false;
   const authModal = $("authModal"), adminPanel = $("adminPanel");
